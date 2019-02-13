@@ -394,6 +394,20 @@ static int conn_close (lua_State *L) {
     return 1;
 }
 
+/*
+** Returns true when conn is closed.
+*/
+static int conn_closed (lua_State *L) {
+    conn_data *conn = (conn_data *)luaL_checkudata (L, 1, LUASQL_CONNECTION_PG);
+    luaL_argcheck (L, conn != NULL, 1, LUASQL_PREFIX"connection expected");
+    if (conn->closed) {
+        lua_pushboolean (L, 1);
+        return 1;
+    }
+    lua_pushboolean (L, 0);
+    return 1;
+}
+
 
 /*
 ** Escapes a string for use within an SQL statement.
@@ -605,6 +619,7 @@ static void create_metatables (lua_State *L) {
     struct luaL_Reg connection_methods[] = {
         {"__gc",          conn_gc},
         {"close",         conn_close},
+        {"closed",        conn_closed},
         {"escape",        conn_escape},
         {"execute",       conn_execute},
         {"commit",        conn_commit},
