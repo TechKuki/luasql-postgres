@@ -92,8 +92,14 @@ static cur_data *getcursor (lua_State *L) {
 static void pushvalue (lua_State *L, PGresult *res, int tuple, int i) {
     if (PQgetisnull (res, tuple, i-1))
         lua_pushnil (L);
-    else
-        lua_pushstring (L, PQgetvalue (res, tuple, i-1));
+    else {
+        Oid codigo = PQftype (res, i-1);
+        char* value = PQgetvalue (res, tuple, i-1);
+        if (codigo >= 20 && codigo <= 23)
+            lua_pushinteger (L, atoi(value));
+        else
+            lua_pushstring (L, value);
+    }
 }
 
 
