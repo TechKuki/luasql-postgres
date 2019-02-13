@@ -161,6 +161,32 @@ static int cur_fetch (lua_State *L) {
 
 
 /*
+** Get all row of the given cursor.
+*/
+static int cur_fetchall (lua_State *L) {
+    cur_data *cur = getcursor (L);
+    PGresult *res = cur->pg_res;
+    int tuple = cur->curr_tuple;
+    int ntuples = PQntuples (res);
+
+    lua_newtable (L);
+    for ( ; tuple < ntuples; ) {
+        lua_newtable (L);
+        /* Copy values to alphanumerical indices */
+        for (int i = 1; i <= cur->numcols; i++) {
+            lua_pushstring (L, PQfname (res, i-1));
+            pushvalue (L, res, tuple, i);
+            lua_rawset (L, 3);
+        }
+        lua_rawseti (L, 2, tuple+1);
+        tuple = ++cur->curr_tuple;
+    }
+    cur_nullify (L, cur);
+    return 1; /* return table */
+}
+
+
+/*
 ** Cursor object collector function
 */
 static int cur_gc (lua_State *L) {
@@ -592,6 +618,7 @@ static void create_metatables (lua_State *L) {
         {"getcolnames", cur_getcolnames},
         {"getcoltypes", cur_getcoltypes},
         {"fetch",       cur_fetch},
+        {"fetchall",    cur_fetchall},
         {"numrows",     cur_numrows},
         {NULL, NULL},
     };
